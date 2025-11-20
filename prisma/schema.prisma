@@ -1,0 +1,37 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  userType  String   // "company" or "contributor"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Common fields
+  firstName       String?
+  lastName        String?
+  phone           String?
+  
+  // Company specific fields
+  companyName     String?
+  service         String?
+  jobTitle        String?
+  
+  // Contributor specific fields
+  birthDate       String?
+  birthPlace      String?
+  birthCountry    String?
+  nationality     String?
+  siretNumber     String?
+  address         String?
+  hasDriverLicense Boolean @default(false)
+}
