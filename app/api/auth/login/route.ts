@@ -28,6 +28,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if email is verified
+    if (!user.isVerified) {
+      return NextResponse.json(
+        { 
+          error: 'Compte non vérifié',
+          needsVerification: true,
+          email: user.email
+        },
+        { status: 403 }
+      );
+    }
+
     // Return user data (without password)
     const { password: _, ...userWithoutPassword } = user;
 

@@ -62,8 +62,7 @@ export default function RegisterCompanyPage() {
       const data = await response.json();
       
       if (response.ok) {
-        alert('Inscription réussie! Un email de bienvenue vous a été envoyé.');
-        router.push('/login');
+        router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`);
       } else {
         alert(data.error || 'Erreur lors de l\'inscription');
       }

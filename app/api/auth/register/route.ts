@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
-import { sendWelcomeEmail } from '@/lib/email';
+import { sendVerificationEmail } from '@/lib/email';
+
+// Generate 6-digit verification code
+function generateVerificationCode(): string {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,28 +28,40 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user
+    // Generate verification code and expiry (15 minutes)
+    const verificationCode = generateVerificationCode();
+    const verificationCodeExpiry = new Date(Date.now() + 15 * 60 * 1000);
+
+    // Create user (unverified)
     const user = await prisma.user.create({
       data: {
         email,
         password: hashedPassword,
         name,
         userType,
+        isVerified: false,
+        verificationCode,
+        verificationCodeExpiry,
         ...otherFields,
       },
     });
 
-    // Send welcome email
+    // Send verification email
     try {
-      await sendWelcomeEmail(email, name, userType);
+      await sendVerificationEmail(email, name, verificationCode);
     } catch (emailError) {
-      console.error('Failed to send welcome email:', emailError);
-      // Don't fail registration if email fails
+      console.error('Failed to send verification email:', emailError);
+      // Delete user if email fails
+      await prisma.user.delete({ where: { id: user.id } });
+      return NextResponse.json(
+        { error: 'Erreur lors de l\'envoi de l\'email de vérification' },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json(
       { 
-        message: 'Inscription réussie!',
+        message: 'Inscription réussie! Vérifiez votre email.',
         user: { id: user.id, email: user.email, name: user.name }
       },
       { status: 201 }

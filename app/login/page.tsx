@@ -29,8 +29,13 @@ export default function LoginPage() {
       const data = await response.json();
       
       if (response.ok) {
+        // Save user data to localStorage
+        localStorage.setItem('user', JSON.stringify(data.user));
         alert('Connexion réussie!');
-        router.push('/choice-register');
+        router.push('/dashboard');
+      } else if (data.needsVerification) {
+        alert('Votre compte n\'est pas encore vérifié. Veuillez vérifier votre email.');
+        router.push(`/verify-email?email=${encodeURIComponent(data.email)}`);
       } else {
         alert(data.error || 'Erreur lors de la connexion');
       }
